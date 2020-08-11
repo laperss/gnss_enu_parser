@@ -95,11 +95,12 @@ public:
 class Parser {
 public:
     Parser(ros::NodeHandle nh);
-    void Setup();
+    bool SetupSerial(Serial * serial);
     void Loop();
     bool Reset(std_srvs::Empty::Request  &req,
 	       std_srvs::Empty::Response &res);
     void Char2ENU(char * input);   
+    void Char2ENUNoSend(char * input, ENUProtocol * enu);   
     //Serial serial;
     //Socket socket;
 
@@ -116,6 +117,7 @@ private:
     static constexpr double gravity = 9.8066;
     double lat_origin;
     double lon_origin;
+    double initial_tow;
     // Local coordinates of boat GPS relative to landing platform
     double gps_forward, gps_left;
     

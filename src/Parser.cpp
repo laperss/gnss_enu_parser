@@ -29,25 +29,46 @@ Parser::Parser(ros::NodeHandle nh):
     pose_channel = nh.resolveName("enu");
     pose_pub = nh.advertise<gnss_data::Enu>(pose_channel, 1);
     reset_service = nh.advertiseService("/filter/reset", &Parser::Reset, this);
+}
 
-    /*
-    if (read_from_serial){
-	std::string serial_path;
-	SetVariableFromParam(nh_gnss_parser, "serial", serial_path);
-	serial.Setup();
-    } else{
-	std::string socket_addr;
-	int socket_port;
-	SetVariableFromParam(nh_gnss_parser, "socket_ip", socket_addr);
-	SetVariableFromParam(nh_gnss_parser, "socket_port", socket_port);
-	socket.SetIP(socket_addr);
-	socket.SetPort(socket_port);
-	socket.Setup();
+
+bool Parser::SetupSerial(Serial * serial){
+    ros::Rate loop_rate(5);
+    char message[150];
+    int bytes = 0;
+    int count = 0;
+    ROS_INFO("Setup GNSS parser...");
+    ENUProtocol enu;
+    double tow = 0;
+    while(ros::ok() && count < 10){
+	ros::spinOnce();
+	bytes = serial->ReadLine(message);
+	if (bytes>0)
+	    Char2ENUNoSend(message, &enu);
+
+        ROS_INFO("time of week = %f", enu.tow);
+        if (fabs(enu.tow - tow) > 2.0){
+            ROS_WARN("resetting time of week = %f", enu.tow);
+            tow = enu.tow;
+            count = 0;
+        }else{
+            tow = enu.tow;
+            count++;            
+        }
+        // ADD: Check that values make sense
+        if (enu.ns == 0){
+            ROS_ERROR("ENU message was read incorrectly: %s", message);
+            ros::shutdown();            
+            return -1;
+        }
+
+        
+	loop_rate.sleep();
     }
-    */
+    initial_tow = tow;
     ROS_INFO("Setup of GNSS parser finished");
+    return 0;
 
-    
 }
 
 bool Parser::Reset(std_srvs::Empty::Request  &req,
@@ -57,6 +78,15 @@ bool Parser::Reset(std_srvs::Empty::Request  &req,
     
     return 1;
 }
+
+void Parser::Char2ENUNoSend(char * input, ENUProtocol * enu){
+    sscanf (input,"%d %f %14f %14f %14f %3d %3d %f %f %f %f %f %f %f %f",
+	    &enu->week, &enu->tow, &enu->east, &enu->north, &enu->up,
+	    &enu->Q, &enu->ns, &enu->sde, &enu->sdn, &enu->sdu,
+	    &enu->sden, &enu->sdnu, &enu->sdue, &enu->age, &enu->ratio);
+
+}
+
 
 
 void Parser::Char2ENU(char * input){
@@ -68,11 +98,12 @@ void Parser::Char2ENU(char * input){
 	    &enu.sden, &enu.sdnu, &enu.sdue, &enu.age, &enu.ratio);
 
     // ADD: Check that values make sense
+    if (enu.ns == 0){
+        ROS_ERROR("ENU message was read incorrectly: %s", input);
+        return;
+    }
 
     gnss_data::Enu enu_msg;
-    //pose_msg.header.seq = seq++;
-    //pose_msg.header.stamp = ros_time_from_week_and_tow(enu.week,enu.tow);
-
     enu_msg.east = enu.east;
     enu_msg.north = enu.north;
     enu_msg.up = enu.up;
@@ -105,27 +136,6 @@ void Parser::Loop(){
     ros::Rate loop_rate(rate);
     ros::Duration(1.0).sleep();
 
-    /*
-    char message[150];
-    char * ptr = NULL;
-    char c;
-
-    int bytes;
-    while(ros::ok()){
-	printf("Loop\n");
-	ros::spinOnce();
-
-	if (read_from_serial){
-	    bytes = serial.ReadLine(message);
-	} else{
-	    bytes = socket.ReadLine(message);
-	}
-	if (bytes>0)
-	    Char2ENU(message, enu_msg);
-
-	loop_rate.sleep();
-    }
-    */
 }
 
 

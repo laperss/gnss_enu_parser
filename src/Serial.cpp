@@ -16,10 +16,11 @@ Serial::~Serial(){
 
 void Serial::Setup() {
    // Open port
+  ROS_INFO("Open port: %s", dev.c_str());
     serial_fd = open(dev.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
     if (serial_fd < 0) {
-        ROS_ERROR("Failed to open port");
-	ros::shutdown();	
+      ROS_ERROR("Failed to open port: %i", serial_fd);
+      ros::shutdown();	
     }
 
     // Config
@@ -57,7 +58,7 @@ void Serial::Setup() {
         throw std::runtime_error("Failed to flush buffer!");
     }
 
-    ROS_INFO("Set up serial connection to device %s \n", this->dev);
+    ROS_INFO("Set up serial connection to device %s \n", this->dev.c_str());
 }
 
 int Serial::Available() {

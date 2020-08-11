@@ -16,12 +16,12 @@
   <!-- Parser -->
   <!-- Launch either the serial or socket version -->
   <group if="$(eval type=='serial')"  ns="$(arg gnss_ns)">
-    <node pkg="gnss_data" type="parser_node_serial" name="parser_node" output="screen">
+    <node pkg="gnss_data" type="parser_node_serial" name="parser_node_serial" output="screen">
     </node>
     <rosparam command="load" file="$(find gnss_data)/resources/parameters.yaml" />
   </group>
   <group if="$(eval type=='socket')"  ns="$(arg gnss_ns)">
-    <node pkg="gnss_data" type="parser_node_socket" name="parser_node" output="screen">
+    <node pkg="gnss_data" type="parser_node_socket" name="parser_node_socket" output="screen">
     </node>
     <rosparam command="load" file="$(find gnss_data)/resources/parameters.yaml" />
   </group>

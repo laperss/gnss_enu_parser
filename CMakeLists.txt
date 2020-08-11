@@ -135,7 +135,7 @@ add_executable(parser_node_serial src/parser_node_serial.cpp src/Parser.cpp src/
 target_link_libraries(parser_node_serial ${catkin_LIBRARIES})
 add_dependencies(parser_node_serial gnss_data_generate_messages_cpp)
 
-add_executable(parser_node_socket src/parser_node_socket.cpp src/Parser.cpp src/Socket.cpp)
+add_executable(parser_node_socket src/parser_node_socket.cpp src/Parser.cpp src/Socket.cpp src/Serial.cpp)
 target_link_libraries(parser_node_socket ${catkin_LIBRARIES})
 add_dependencies(parser_node_socket gnss_data_generate_messages_cpp)
 
