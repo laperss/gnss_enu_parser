@@ -30,13 +30,16 @@ int main(int argc, char **argv){
     }else{
 	ROS_ERROR("No ROS parameter 'socket_port' provided.");
 	ros::shutdown();
-    }    
+    }
+
+    ROS_INFO("Setup the socket connection");
     Socket socket(socket_port, socket_addr);
     socket.SetIP(socket_addr);
     socket.SetPort(socket_port);
     socket.Setup();
 
-    
+    ROS_INFO("Collect data to TOW");    
+    parser.SetupSocket(&socket);
 
     ros::Rate loop_rate(rate);
     char message[150];

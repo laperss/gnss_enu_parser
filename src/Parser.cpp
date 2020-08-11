@@ -3,6 +3,7 @@
 #include <math.h>       /* cos */
 #include<vector>
 #include<string>
+#include<chrono>
 #include "Parser.hpp"
 
 static const double EPSILON = 0.00000000001;
@@ -71,6 +72,46 @@ bool Parser::SetupSerial(Serial * serial){
 
 }
 
+
+
+bool Parser::SetupSocket(Socket * socket){
+    ros::Rate loop_rate(5);
+    char message[150];
+    int bytes = 0;
+    int count = 0;
+    int error_count = 0;
+    ENUProtocol enu;
+    double tow = 0;
+    while(ros::ok() && count < 10){
+	ros::spinOnce();
+	bytes = socket->ReadLine(message);
+	if (bytes>0)
+	    Char2ENUNoSend(message, &enu);
+
+        if (fabs(enu.tow - tow) > 2.0){
+            tow = enu.tow;
+            count = 0;
+        }else{
+            tow = enu.tow;
+            count++;            
+        }
+        // ADD: Check that values make sense
+        if (enu.ns == 0){
+            ROS_WARN("ENU message was read incorrectly: %s", message);
+            error_count++;
+            if (error_count>10){
+                ros::shutdown();            
+                return -1;
+            }
+        }         
+	loop_rate.sleep();
+    }
+    initial_tow = tow;
+    ROS_INFO("Setup of GNSS parser finished: TOW = %f", initial_tow);
+    return 0;
+
+}
+
 bool Parser::Reset(std_srvs::Empty::Request  &req,
 		   std_srvs::Empty::Response  &res){
     ROS_INFO("Reset state estimation filter");
@@ -99,6 +140,9 @@ void Parser::Char2ENU(char * input){
 
     // ADD: Check that values make sense
     if (enu.ns == 0){
+        ROS_ERROR("ENU message was read incorrectly: %s", input);
+        return;
+    }else if (fabs(enu.tow-initial_tow) < 43200){
         ROS_ERROR("ENU message was read incorrectly: %s", input);
         return;
     }

@@ -96,6 +96,7 @@ class Parser {
 public:
     Parser(ros::NodeHandle nh);
     bool SetupSerial(Serial * serial);
+    bool SetupSocket(Socket * socket);
     void Loop();
     bool Reset(std_srvs::Empty::Request  &req,
 	       std_srvs::Empty::Response &res);

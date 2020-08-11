@@ -93,7 +93,7 @@ int Socket::Available() {
 int Socket::ReadByte(char * buffer) {
     int n = read(this->socket_fd , buffer, 1);
     if (n==0){
-	Reconnect();
+	//Reconnect();
     }
     return n;
 }
@@ -102,7 +102,6 @@ int Socket::ReadLine(char * bytePtr) {
     char c;
     char * ptr = NULL;
     int bytes = 0;
-    printf("Read from socket\n");
     bool available = false;
     for (int i=0; i<100; i++){
 	if (Available() > 0) {
@@ -111,7 +110,6 @@ int Socket::ReadLine(char * bytePtr) {
 	}
     }
     if (available) {
-	printf("Is available\n");
 	while (Available() > 0) {
 	    if (read(this->socket_fd , &c, 1) <= 0) {
 		close(fd);
