@@ -1,5 +1,5 @@
-# gnss_parser
-This script parses string data published to either a serial port or a TCP socket. 
+# GNSS ENU parser
+This script parses ENU (east north up) string data published to either a serial port or a TCP socket. 
 Default setting is serial port. The parsed data is published in ROS using the custom message ENU, found in the msgs folder.
 
 
