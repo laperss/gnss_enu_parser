@@ -58,6 +58,5 @@ int main(int argc, char **argv){
     }
     
 
-    parser.Loop();
     return 0;
 }

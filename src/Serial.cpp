@@ -85,8 +85,8 @@ int Serial::ReadLine(char * bytePtr) {
     char c;
     char * ptr = NULL;
     int bytes = 0;
-    if (Available() > 0) {
-	while (Available() > 0) {
+    while (1) {
+        if (Available() > 0) {
 	    if (read(serial_fd, &c, 1) < 0) {
 		close(serial_fd);
 		ROS_ERROR("Failed to read bytes!");
@@ -94,7 +94,8 @@ int Serial::ReadLine(char * bytePtr) {
 	    }
 	    if(c ==  '\n'){
 		if (ptr != NULL)
-		    *ptr = '\0';
+		    //*ptr = '\0';
+                    ;
 		bytes++;
 		return bytes;
 	    } else{

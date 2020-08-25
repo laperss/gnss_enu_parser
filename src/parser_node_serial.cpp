@@ -7,6 +7,8 @@ int main(int argc, char **argv){
     ros::NodeHandle nh_;
     Parser parser(nh_);
 
+    int result;
+        
     // Read 'rate', specifying output rate (Hz)
     double rate;
     if(nh_.hasParam("rate")){
@@ -28,24 +30,23 @@ int main(int argc, char **argv){
     serial.Setup();
 
     
+    result = parser.SetupSerial(&serial);
 
-    ros::Rate loop_rate(rate);
-    char message[150];
-    char * ptr = NULL;
-    char c;
+    if (result == 0){
+        ros::Rate loop_rate(rate);
+        char message[250];
+        int bytes = 0;
+        
+        while(ros::ok()){
+            ros::spinOnce();
+            bytes = serial.ReadLine(message);
 
-    int bytes = 0;
-    
-    while(ros::ok()){
-	ros::spinOnce();
-	bytes = serial.ReadLine(message);
-	if (bytes>0)
-	    parser.Char2ENU(message);
-
-	loop_rate.sleep();
+            
+            if (bytes>0){
+                parser.Char2ENU(message);
+            }
+            loop_rate.sleep();
+        }
     }
-    
-
-    parser.Loop();
     return 0;
 }

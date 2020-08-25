@@ -38,6 +38,7 @@ bool Parser::SetupSerial(Serial * serial){
     char message[150];
     int bytes = 0;
     int count = 0;
+    int error_count = 0;
     ROS_INFO("Setup GNSS parser...");
     ENUProtocol enu;
     double tow = 0;
@@ -47,7 +48,6 @@ bool Parser::SetupSerial(Serial * serial){
 	if (bytes>0)
 	    Char2ENUNoSend(message, &enu);
 
-        ROS_INFO("time of week = %f", enu.tow);
         if (fabs(enu.tow - tow) > 2.0){
             ROS_WARN("resetting time of week = %f", enu.tow);
             tow = enu.tow;
@@ -58,16 +58,21 @@ bool Parser::SetupSerial(Serial * serial){
         }
         // ADD: Check that values make sense
         if (enu.ns == 0){
-            ROS_ERROR("ENU message was read incorrectly: %s", message);
-            ros::shutdown();            
-            return -1;
+            ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, message);
+            count = 0;
+            error_count++;
+            if (error_count>=10){
+                ROS_ERROR("Setup of GNSS parser could not finish: Serial port readings are incorrect.");
+                return -1;
+                ros::shutdown();            
+            }
+            ros::Duration(1.0).sleep();
+        }else{
+            loop_rate.sleep();
         }
-
-        
-	loop_rate.sleep();
     }
     initial_tow = tow;
-    ROS_INFO("Setup of GNSS parser finished");
+    ROS_INFO("Setup of GNSS parser finished successfully. ");
     return 0;
 
 }
@@ -97,7 +102,7 @@ bool Parser::SetupSocket(Socket * socket){
         }
         // ADD: Check that values make sense
         if (enu.ns == 0){
-            ROS_WARN("ENU message was read incorrectly: %s", message);
+            ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, message);
             error_count++;
             if (error_count>10){
                 ros::shutdown();            
@@ -140,10 +145,10 @@ void Parser::Char2ENU(char * input){
 
     // ADD: Check that values make sense
     if (enu.ns == 0){
-        ROS_ERROR("ENU message was read incorrectly: %s", input);
+        ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, input);        
         return;
-    }else if (fabs(enu.tow-initial_tow) < 43200){
-        ROS_ERROR("ENU message was read incorrectly: %s", input);
+    }else if (fabs(enu.tow-initial_tow) > 43200){
+        ROS_WARN("ENU message invalid (tow = %f): %s", enu.tow, input);        
         return;
     }
 
@@ -175,12 +180,6 @@ void Parser::Char2ENU(char * input){
 }
 
 
-void Parser::Loop(){
-    
-    ros::Rate loop_rate(rate);
-    ros::Duration(1.0).sleep();
-
-}
 
 
 
