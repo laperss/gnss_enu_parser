@@ -180,82 +180,9 @@ void Parser::Char2ENU(char * input){
 }
 
 
-
-
-
-
-
-//--------------------------- CONVERSIONS ------------------------------ //
-double deg2rad (const double degree) { return (degree * M_PI / 180); };
-double rad2deg (const double radian) { return (radian * 180 / M_PI); };
-
-
-void Parser::GPStoEarth(const double lat, const double lon, double& east, double& north){
-
-    if ((std::abs(lon - lon_origin) < EPSILON) &&  (std::abs(lat - lat_origin) < EPSILON)){
-	east = 0.0;
-	north = 0.0;
-    }else{
-    
-	double lat1r, lon1r, lat2r, lon2r, u, v, x, y;
-	// From (origin)
-	lon1r = deg2rad(lon_origin);
-	lat1r = deg2rad(lat_origin);
-
-	// To (current position)
-	lat2r = deg2rad(lat);
-	lon2r = deg2rad(lon);
-
-	const double dlon = deg2rad(lon - lon_origin);
-	const double dlat = deg2rad(lat - lat_origin);
-    
-	y = sin(dlon)*cos(lat2r);
-	x = cos(lat1r)*sin(lat2r) - sin(lat1r)*cos(lat2r)*cos(dlon);
-	u = sin((lat1r - lat2r)/2);
-	v = sin((lon1r - lon2r)/2);
-	double degree = atan2(y, x); // Degrees from north?
-	double distance =  2.0 * 6378138.12 * asin(sqrt(u*u + cos(lat1r) * cos(lat2r)*v*v));
-
-	east = sin(degree)*distance;  // East
-	north = cos(degree)*distance;  // North
-    }
-}
-
-
-void Parser::SetVariableFromParam(ros::NodeHandle nh,
-				  std::string name,
-				  std::string& value){
-    if(nh.hasParam(name)){
-        nh.getParam(name, value);
-    }else{
-	ROS_ERROR("No parameter %s", name.c_str());
-	ros::shutdown();
-    }
-}
-
 void Parser::SetVariableFromParam(ros::NodeHandle nh,
 				  std::string name,
 				  int& value){
-    if(nh.hasParam(name)){
-        nh.getParam(name, value);
-    }else{
-	ROS_ERROR("No parameter %s", name.c_str());
-	ros::shutdown();
-    }
-}
-void Parser::SetVariableFromParam(ros::NodeHandle nh,
-				  std::string name,
-				  double& value){
-    if(nh.hasParam(name)){
-        nh.getParam(name, value);
-    }else{
-	ROS_ERROR("No parameter %s", name.c_str());
-	ros::shutdown();
-    }
-}
-void Parser::SetVariableFromParam(ros::NodeHandle nh,
-				  std::string name,
-				  std::vector<double>& value){
     if(nh.hasParam(name)){
         nh.getParam(name, value);
     }else{
