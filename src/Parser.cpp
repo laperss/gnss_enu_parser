@@ -221,36 +221,54 @@ void Parser::Char2NMEA(char * input){
     NMEAProtocol nmea;
     char char1[] = "$";
     char chargga[] = "GPGGA";
-    if (strcmp(input, char1)){
+    char charrmc[] = "GPRMC";
+    std::string ggastr = "$GPGGA";
+    if (strcmp(input, char1)==0){
             double lon_temp;
             double lat_temp;
             double lon_min_temp;
             double lat_min_temp;
             double lon_sec_temp;
             double lat_sec_temp;
-            sscanf (input,"$%5s,%f,%3f%2f.%f,%c,%2f%2f.%f,%c,%d,%d,%f,%f,%c,%f,%f",
-                    &nmea.id, &nmea.UTC,
-                    &lat_temp, &lat_min_temp, &lat_sec_temp, &nmea.lat_dir,
-                    &lon_temp, &lon_min_temp, &lon_sec_temp, &nmea.lon_dir,
-                    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
 
-            ROS_INFO("Message = %s", input);
-            ROS_INFO("ID = %s", nmea.id);
-            ROS_INFO("UTC = %f", nmea.UTC);
-            ROS_INFO("ns = %f", nmea.ns);
-            
-            if (strcmp(chargga, nmea.id) && nmea.UTC>0.0 && nmea.ns < 100 && nmea.ns > 0){
-                    // ADD: Check that values make sense
-                ROS_INFO("latitude: %f, %f, %f", lat_temp, lat_min_temp, lat_sec_temp);
-                nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
-                nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
-                
-                if (nmea.ns == 0){
-                        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
-                        return;
+
+            std::string str(input);
+
+            std::istringstream ss(str);            
+            std::string value;
+            int count = 0;
+            double latitude_tmp;
+            double longitude_tmp;
+            while(std::getline(ss, value, ',')) {
+                if (count == 0){
+                    if((value.compare(ggastr)==0)){
+                        for (int i=0;i<5;i++) nmea.id[i] = input[1+i];
+                    }else{
+                        for (int i=0;i<5;i++) nmea.id[i] = charrmc[i];
+                        break;
                     }
+                }else if (count == 2){
+                    //std::cout << "latitude = " << value << '\n';
+                    nmea.latitude = stod(value.substr(0,2))  + stod(value.substr(2))/60;
+                    
+                }else if (count == 4){
+                    //std::cout << "longitude = " << value << '\n';
+                    nmea.longitude = stod(value.substr(0,3))  + stod(value.substr(3))/60;
+                }else if (count == 9){
+                    //std::cout << "height = " << value << '\n';
+                    nmea.height = stod(value);
+                }
 
-
+              count++;
+            }
+                
+            if (strcmp(chargga, nmea.id)==0){
+                    // ADD: Check that values make sense
+                //ROS_INFO("latitude: %f", nmea.latitude);
+                //ROS_INFO("longitude: %f", nmea.longitude);
+                //nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
+                //nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
+                
                     double east, north;
                     GPStoEarth(nmea.latitude, nmea.longitude, east, north);
                     gnss_data::Enu enu_msg;
