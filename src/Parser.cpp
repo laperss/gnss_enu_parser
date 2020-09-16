@@ -24,29 +24,37 @@ Parser::Parser(ros::NodeHandle nh):
     publish(true), seq(0),
     nh_gnss_parser(nh){
 
+    pose_channel = nh.resolveName("enu");
+    pose_pub = nh.advertise<gnss_data::Enu>(pose_channel, 1);
+
     SetVariableFromParam(nh_gnss_parser, "rate", rate);
     SetVariableFromParam(nh_gnss_parser, "/origin_lat", lat_origin, 57.760981);
     SetVariableFromParam(nh_gnss_parser, "/origin_lon", lon_origin, 16.685680);
     ROS_INFO("GNSS parser origin = (%f, %f)", lat_origin, lon_origin);
+
     
-    dt = 1/rate; 
-
-    pose_channel = nh.resolveName("enu");
-    pose_pub = nh.advertise<gnss_data::Enu>(pose_channel, 1);
-    reset_service = nh.advertiseService("/filter/reset", &Parser::Reset, this);
-
-    int the_message_type;
+    int the_message_type = 1;
+    /*
     if(nh_gnss_parser.hasParam("msg_type")){
         nh_gnss_parser.getParam("msg_type", the_message_type);
-        if (the_message_type == NMEA)
-            ROS_INFO("Using message type: NMEA");
-        else if (the_message_type == ENU)
-            ROS_INFO("Using message type: ENU");
-
+        ROS_INFO("Message type = %d", the_message_type);
     }else{
 	ROS_ERROR("No parameter 'msg_type'");
 	ros::shutdown();
     }
+    */
+    if (the_message_type == 1){
+        ROS_INFO("Using message type: NMEA");
+        msg_type == NMEA;
+    }
+    else if (the_message_type == 2){
+        msg_type == ENU;
+        ROS_INFO("Using message type: ENU");
+    }
+    dt = 1/rate; 
+
+    reset_service = nh.advertiseService("/filter/reset", &Parser::Reset, this);
+
     
 }
 
@@ -211,7 +219,6 @@ void Parser::Char2ENU(char * input){
 
 void Parser::Char2NMEA(char * input){
     NMEAProtocol nmea;
-
     sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%f",
 	    &nmea.id, &nmea.UTC, &nmea.latitude, &nmea.lat_dir, &nmea.longitude, &nmea.lon_dir,
 	    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
@@ -225,9 +232,21 @@ void Parser::Char2NMEA(char * input){
 
     double east, north;
     GPStoEarth(nmea.latitude, nmea.longitude, east, north);
+    ROS_INFO("east = %f", east);
+    gnss_data::Enu enu_msg;
+    enu_msg.east = east;
+    enu_msg.north = north;
+    enu_msg.up = nmea.height;
 
-    ROS_INFO("COMPUTED EAST NORTH : ", east, north);
+    enu_msg.header.seq = seq++;
+    //enu_msg.header.stamp = ros_time_from_week_and_tow(enu.week,enu.tow);
 
+    enu_msg.ratio = nmea.ratio;
+    enu_msg.age = nmea.age;
+    enu_msg.status = nmea.Q;
+    enu_msg.numsat = nmea.ns;
+	
+    pose_pub.publish(enu_msg);
 
 
 }
