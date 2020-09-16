@@ -235,11 +235,12 @@ void Parser::Char2NMEA(char * input){
                     &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
 
             ROS_INFO("Message = %s", input);
+            ROS_INFO("ID = %s", nmea.id);
+            ROS_INFO("UTC = %f", nmea.UTC);
+            ROS_INFO("ns = %f", nmea.ns);
             
             if (strcmp(chargga, nmea.id) && nmea.UTC>0.0 && nmea.ns < 100 && nmea.ns > 0){
                     // ADD: Check that values make sense
-                ROS_INFO("ID = %s", nmea.id);
-                ROS_INFO("UTC = %f", nmea.UTC);
                 ROS_INFO("latitude: %f, %f, %f", lat_temp, lat_min_temp, lat_sec_temp);
                 nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
                 nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
