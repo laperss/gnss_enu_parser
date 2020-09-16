@@ -228,18 +228,23 @@ void Parser::Char2NMEA(char * input){
             double lat_min_temp;
             double lon_sec_temp;
             double lat_sec_temp;
-            sscanf (input,"$%s,%f,%3f%2f.%f,%c,%2f%2f.%f,%c,%d,%d,%f,%f,%c,%f,%f",
+            sscanf (input,"$%5s,%f,%3f%2f.%f,%c,%2f%2f.%f,%c,%d,%d,%f,%f,%c,%f,%f",
                     &nmea.id, &nmea.UTC,
                     &lat_temp, &lat_min_temp, &lat_sec_temp, &nmea.lat_dir,
                     &lon_temp, &lon_min_temp, &lon_sec_temp, &nmea.lon_dir,
                     &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
 
-            nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
-            nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
+            ROS_INFO("Message = %s", input);
             
-            if (strcmp(chargga, nmea.id)){
+            if (strcmp(chargga, nmea.id) && nmea.UTC>0.0 && nmea.ns < 100 && nmea.ns > 0){
                     // ADD: Check that values make sense
-                    if (nmea.ns == 0){
+                ROS_INFO("ID = %s", nmea.id);
+                ROS_INFO("UTC = %f", nmea.UTC);
+                ROS_INFO("latitude: %f, %f, %f", lat_temp, lat_min_temp, lat_sec_temp);
+                nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
+                nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
+                
+                if (nmea.ns == 0){
                         ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
                         return;
                     }
