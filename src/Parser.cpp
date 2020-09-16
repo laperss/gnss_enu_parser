@@ -249,17 +249,17 @@ void Parser::Char2NMEA(char * input){
                     }
                 }else if (count == 1){
                     nmea.UTC = stod(value);
-                else if (count == 2){
+                }else if (count == 2){
                     nmea.latitude = stod(value.substr(0,2))  + stod(value.substr(2))/60;
                 }else if (count == 4){
                     nmea.longitude = stod(value.substr(0,3))  + stod(value.substr(3))/60;
-                else if (count == 6){
+                }else if (count == 6){
                     nmea.Q = stoi(value);
-                else if (count == 7){
+                }else if (count == 7){
                     nmea.ns = stoi(value);
                 }else if (count == 8){
                     nmea.hdop = stod(value);
-                else if (count == 9){
+                }else if (count == 9){
                     nmea.height = stod(value);
                 }
 
