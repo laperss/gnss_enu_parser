@@ -133,14 +133,10 @@ public:
     int seq;
 
 private:
-    static constexpr int n_states = 18;
-    static constexpr int n_inputs = 4;
-    static constexpr int n_measured = 9;
-
-    static constexpr double gravity = 9.8066;
     double lat_origin;
     double lon_origin;
     double initial_tow;
+
     // Local coordinates of boat GPS relative to landing platform
     double gps_forward, gps_left;
 
@@ -164,8 +160,8 @@ private:
     // Conversions
     void GPStoEarth(const double lat, const double lon, double& east, double&north);
     
+        
     bool publish;
-    
    
     // Publishers
     ros::Publisher pose_pub;
@@ -175,7 +171,4 @@ private:
     
     // Channel names
     std::string pose_channel;
-
-    
-    
 };

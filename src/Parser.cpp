@@ -209,7 +209,6 @@ void Parser::Char2ENU(char * input){
 
 }
 
-
 void Parser::Char2NMEA(char * input){
     NMEAProtocol nmea;
 
@@ -286,6 +285,7 @@ void Parser::SetVariableFromParam(ros::NodeHandle nh,
 	ros::shutdown();
     }
 }
+
 
 void Parser::SetVariableFromParam(ros::NodeHandle nh,
 				  std::string name,
