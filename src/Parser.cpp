@@ -219,35 +219,45 @@ void Parser::Char2ENU(char * input){
 
 void Parser::Char2NMEA(char * input){
     NMEAProtocol nmea;
-    sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%f",
-	    &nmea.id, &nmea.UTC, &nmea.latitude, &nmea.lat_dir, &nmea.longitude, &nmea.lon_dir,
-	    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
+    char char1[] = "$";
+    char chargga[] = "GPGGA";
+    if (strcmp(input, char1)){
+            sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%f",
+                    &nmea.id, &nmea.UTC, &nmea.latitude, &nmea.lat_dir, &nmea.longitude, &nmea.lon_dir,
+                    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
 
-    // ADD: Check that values make sense
-    if (nmea.ns == 0){
-        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
-        return;
-    }
+            if (strcmp(chargga, nmea.id)){
+                    // ADD: Check that values make sense
+                    if (nmea.ns == 0){
+                        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
+                        return;
+                    }
 
 
-    double east, north;
-    GPStoEarth(nmea.latitude, nmea.longitude, east, north);
-    ROS_INFO("east = %f", east);
-    gnss_data::Enu enu_msg;
-    enu_msg.east = east;
-    enu_msg.north = north;
-    enu_msg.up = nmea.height;
+                    double east, north;
+                    GPStoEarth(nmea.latitude, nmea.longitude, east, north);
+                    gnss_data::Enu enu_msg;
+                    enu_msg.east = east;
+                    enu_msg.north = north;
+                    enu_msg.up = nmea.height;
 
-    enu_msg.header.seq = seq++;
-    //enu_msg.header.stamp = ros_time_from_week_and_tow(enu.week,enu.tow);
+                    enu_msg.header.seq = seq++;
+                    //enu_msg.header.stamp = ros_time_from_week_and_tow(enu.week,enu.tow);
 
-    enu_msg.ratio = nmea.ratio;
-    enu_msg.age = nmea.age;
-    enu_msg.status = nmea.Q;
-    enu_msg.numsat = nmea.ns;
+                    enu_msg.ratio = nmea.ratio;
+                    enu_msg.age = nmea.age;
+                    enu_msg.status = nmea.Q;
+                    enu_msg.numsat = nmea.ns;
 	
-    pose_pub.publish(enu_msg);
+                    pose_pub.publish(enu_msg);
+                } else{
+                    ROS_WARN("NMEA message invalid: %s", input);
+            }
+        }
+        else{
+                ROS_WARN("NMEA message invalid: %s", input);        
 
+        }
 
 }
 

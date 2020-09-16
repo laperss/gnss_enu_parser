@@ -30,7 +30,7 @@
 
 
 typedef struct __attribute__((__packed__))  {
-    char id[6];
+    char id[5];
     float UTC = 0.0;
     float latitude = 0.0;
     char  lat_dir;

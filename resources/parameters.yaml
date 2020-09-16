@@ -1,6 +1,6 @@
 rate: 10
 publish: true
-serial: /dev/ttyUSB1
+serial: /dev/ttyUSB0
 socket_ip: localhost
 socket_port: 4040
 type: serial
