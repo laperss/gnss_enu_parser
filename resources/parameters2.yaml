@@ -1,0 +1,9 @@
+rate: 10
+publish: true
+serial: /dev/ttyUSB0
+socket_ip: localhost
+socket_port: 4040
+type: serial
+msg_type : nmea
+id: r1
+frame: b0_ENU
