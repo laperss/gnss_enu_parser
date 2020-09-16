@@ -5,6 +5,8 @@ import numpy
 from gnss_data.msg import Enu
 
 
+RATE = 20
+
 class relative_positioning(object):
     shutdown=False
     def __init__(self):
@@ -27,6 +29,8 @@ class relative_positioning(object):
         self.north_usv = 10000
         self.up_usv = 10000
         
+        self.count = 0
+        
     def usv_callback(self, msg):    
         if (abs(msg.east)>500 or abs(msg.north)>1000):
             self.east_usv = msg.east
@@ -47,7 +51,7 @@ class relative_positioning(object):
         self.control = msg.axes
 
     def step(self):        
-        if (self.east_uav < 1000 && self.east_usv < 1000)
+        if (self.east_uav < 1000 and self.east_usv < 1000):
             enu_msg = Enu()
         
             enu_msg.header.stamp = self.ENUtime
