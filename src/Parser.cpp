@@ -222,10 +222,21 @@ void Parser::Char2NMEA(char * input){
     char char1[] = "$";
     char chargga[] = "GPGGA";
     if (strcmp(input, char1)){
-            sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%f",
-                    &nmea.id, &nmea.UTC, &nmea.latitude, &nmea.lat_dir, &nmea.longitude, &nmea.lon_dir,
+            double lon_temp;
+            double lat_temp;
+            double lon_min_temp;
+            double lat_min_temp;
+            double lon_sec_temp;
+            double lat_sec_temp;
+            sscanf (input,"$%s,%f,%3f%2f.%f,%c,%2f%2f.%f,%c,%d,%d,%f,%f,%c,%f,%f",
+                    &nmea.id, &nmea.UTC,
+                    &lat_temp, &lat_min_temp, &lat_sec_temp, &nmea.lat_dir,
+                    &lon_temp, &lon_min_temp, &lon_sec_temp, &nmea.lon_dir,
                     &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
 
+            nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
+            nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
+            
             if (strcmp(chargga, nmea.id)){
                     // ADD: Check that values make sense
                     if (nmea.ns == 0){
@@ -243,7 +254,7 @@ void Parser::Char2NMEA(char * input){
 
                     enu_msg.header.seq = seq++;
                     //enu_msg.header.stamp = ros_time_from_week_and_tow(enu.week,enu.tow);
-
+                    enu_msg.header.stamp = ros::Time::now();
                     enu_msg.ratio = nmea.ratio;
                     enu_msg.age = nmea.age;
                     enu_msg.status = nmea.Q;

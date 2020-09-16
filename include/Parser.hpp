@@ -31,39 +31,39 @@
 
 typedef struct __attribute__((__packed__))  {
     char id[5];
-    float UTC = 0.0;
-    float latitude = 0.0;
+    double UTC = 0.0;
+    double latitude = 0.0;
     char  lat_dir;
-    float longitude = 0.0;
+    double longitude = 0.0;
     char  lon_dir;
-    float altitude = 0.0;
+    double altitude = 0.0;
     int Q = 0.0;
     int ns = 0.0;
-    float hdop = 0.0;
-    float height = 0.0;
+    double hdop = 0.0;
+    double height = 0.0;
     char  height_unit;
-    float age = 0.0;
-    float ratio = 0.0;
+    double age = 0.0;
+    double ratio = 0.0;
     int reference = 0;
 } NMEAProtocol;
 
 
 typedef struct __attribute__((__packed__))  {
     int week = 0.0;
-    float tow = 0.0;
-    float east = 0.0;
-    float north = 0.0;
-    float up = 0.0;
+    double tow = 0.0;
+    double east = 0.0;
+    double north = 0.0;
+    double up = 0.0;
     int Q = 0.0;
     int ns = 0.0;
-    float sde = 0.0;
-    float sdn = 0.0;
-    float sdu = 0.0;
-    float sden = 0.0;
-    float sdnu = 0.0;
-    float sdue = 0.0;
-    float age = 0.0;
-    float ratio = 0.0;
+    double sde = 0.0;
+    double sdn = 0.0;
+    double sdu = 0.0;
+    double sden = 0.0;
+    double sdnu = 0.0;
+    double sdue = 0.0;
+    double age = 0.0;
+    double ratio = 0.0;
 } ENUProtocol;
 
 
