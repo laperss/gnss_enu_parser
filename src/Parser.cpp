@@ -25,11 +25,29 @@ Parser::Parser(ros::NodeHandle nh):
     nh_gnss_parser(nh){
 
     SetVariableFromParam(nh_gnss_parser, "rate", rate);
+    SetVariableFromParam(nh_gnss_parser, "/origin_lat", lat_origin, 57.760981);
+    SetVariableFromParam(nh_gnss_parser, "/origin_lon", lon_origin, 16.685680);
+    ROS_INFO("GNSS parser origin = (%f, %f)", lat_origin, lon_origin);
+    
     dt = 1/rate; 
 
     pose_channel = nh.resolveName("enu");
     pose_pub = nh.advertise<gnss_data::Enu>(pose_channel, 1);
     reset_service = nh.advertiseService("/filter/reset", &Parser::Reset, this);
+
+    int the_message_type;
+    if(nh_gnss_parser.hasParam("msg_type")){
+        nh_gnss_parser.getParam("msg_type", the_message_type);
+        if (the_message_type == NMEA)
+            ROS_INFO("Using message type: NMEA");
+        else if (the_message_type == ENU)
+            ROS_INFO("Using message type: ENU");
+
+    }else{
+	ROS_ERROR("No parameter 'msg_type'");
+	ros::shutdown();
+    }
+    
 }
 
 
@@ -42,37 +60,42 @@ bool Parser::SetupSerial(Serial * serial){
     ROS_INFO("Setup GNSS parser...");
     ENUProtocol enu;
     double tow = 0;
-    while(ros::ok() && count < 10){
-	ros::spinOnce();
-	bytes = serial->ReadLine(message);
-	if (bytes>0)
-	    Char2ENUNoSend(message, &enu);
 
-        if (fabs(enu.tow - tow) > 2.0){
-            ROS_WARN("resetting time of week = %f", enu.tow);
-            tow = enu.tow;
-            count = 0;
-        }else{
-            tow = enu.tow;
-            count++;            
-        }
-        // ADD: Check that values make sense
-        if (enu.ns == 0){
-            ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, message);
-            count = 0;
-            error_count++;
-            if (error_count>=10){
-                ROS_ERROR("Setup of GNSS parser could not finish: Serial port readings are incorrect.");
-                return -1;
-                ros::shutdown();            
+    if (msg_type == ENU){
+        while(ros::ok() && count < 10){
+            ros::spinOnce();
+            bytes = serial->ReadLine(message);
+            if (bytes>0)
+                Char2ENUNoSend(message, &enu);
+
+            if (fabs(enu.tow - tow) > 2.0){
+                ROS_WARN("resetting time of week = %f", enu.tow);
+                tow = enu.tow;
+                count = 0;
+            }else{
+                tow = enu.tow;
+                count++;            
             }
-            ros::Duration(1.0).sleep();
-        }else{
-            loop_rate.sleep();
+            // ADD: Check that values make sense
+            if (enu.ns == 0){
+                ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, message);
+                count = 0;
+                error_count++;
+                if (error_count>=10){
+                    ROS_ERROR("Setup of GNSS parser could not finish: Serial port readings are incorrect.");
+                    return -1;
+                    ros::shutdown();            
+                }
+                ros::Duration(1.0).sleep();
+            }else{
+                loop_rate.sleep();
+            }
         }
+        initial_tow = tow;
+        ROS_INFO("Setup of GNSS parser finished successfully. ");
+    }else{
+        ROS_INFO("Parsing NMEA messages");
     }
-    initial_tow = tow;
-    ROS_INFO("Setup of GNSS parser finished successfully. ");
     return 0;
 
 }
@@ -133,7 +156,14 @@ void Parser::Char2ENUNoSend(char * input, ENUProtocol * enu){
 
 }
 
-
+void Parser::Char2MSG(char * input){
+    if (msg_type == ENU){
+        Char2ENU(input);
+    }else{
+        Char2NMEA(input);
+    }
+    
+}
 
 void Parser::Char2ENU(char * input){
     ENUProtocol enu;
@@ -176,6 +206,30 @@ void Parser::Char2ENU(char * input){
     enu_msg.numsat = enu.ns;
 	
     pose_pub.publish(enu_msg);
+
+}
+
+
+void Parser::Char2NMEA(char * input){
+    NMEAProtocol nmea;
+
+    sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%f",
+	    &nmea.id, &nmea.UTC, &nmea.latitude, &nmea.lat_dir, &nmea.longitude, &nmea.lon_dir,
+	    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
+
+    // ADD: Check that values make sense
+    if (nmea.ns == 0){
+        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
+        return;
+    }
+
+
+    double east, north;
+    GPStoEarth(nmea.latitude, nmea.longitude, east, north);
+
+    ROS_INFO("COMPUTED EAST NORTH : ", east, north);
+
+
 
 }
 
@@ -253,6 +307,17 @@ void Parser::SetVariableFromParam(ros::NodeHandle nh,
 	ros::shutdown();
     }
 }
+
+void Parser::SetVariableFromParam(ros::NodeHandle nh,
+				  std::string name,
+				  double& value, double standard_value){
+    if(nh.hasParam(name)){
+        nh.getParam(name, value);
+    }else{
+        value = standard_value;
+    }
+}
+
 void Parser::SetVariableFromParam(ros::NodeHandle nh,
 				  std::string name,
 				  std::vector<double>& value){

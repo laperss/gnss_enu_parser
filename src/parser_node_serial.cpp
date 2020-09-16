@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 
             
             if (bytes>0){
-                parser.Char2ENU(message);
+                parser.Char2MSG(message);
             }
             loop_rate.sleep();
         }

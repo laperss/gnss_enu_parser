@@ -30,6 +30,25 @@
 
 
 typedef struct __attribute__((__packed__))  {
+    char id[6];
+    float UTC = 0.0;
+    float latitude = 0.0;
+    char  lat_dir;
+    float longitude = 0.0;
+    char  lon_dir;
+    float altitude = 0.0;
+    int Q = 0.0;
+    int ns = 0.0;
+    float hdop = 0.0;
+    float height = 0.0;
+    char  height_unit;
+    float age = 0.0;
+    float ratio = 0.0;
+    int reference = 0;
+} NMEAProtocol;
+
+
+typedef struct __attribute__((__packed__))  {
     int week = 0.0;
     float tow = 0.0;
     float east = 0.0;
@@ -46,6 +65,8 @@ typedef struct __attribute__((__packed__))  {
     float age = 0.0;
     float ratio = 0.0;
 } ENUProtocol;
+
+
 
 class Socket {
 private:
@@ -99,7 +120,9 @@ public:
     bool SetupSocket(Socket * socket);
     bool Reset(std_srvs::Empty::Request  &req,
 	       std_srvs::Empty::Response &res);
+    void Char2MSG(char * input);   
     void Char2ENU(char * input);   
+    void Char2NMEA(char * input);   
     void Char2ENUNoSend(char * input, ENUProtocol * enu);   
     //Serial serial;
     //Socket socket;
@@ -120,13 +143,23 @@ private:
     double initial_tow;
     // Local coordinates of boat GPS relative to landing platform
     double gps_forward, gps_left;
+
+    enum message_types{
+        NMEA    =  1,
+        ENU     =  2,
+    };
+
+    message_types msg_type; 
     
     ros::NodeHandle nh_gnss_parser;
 
     void SetVariableFromParam(ros::NodeHandle, std::string name, double& value);
-    void SetVariableFromParam(ros::NodeHandle, std::string name, std::string& value);
+    void SetVariableFromParam(ros::NodeHandle, std::string name,
+                              std::string& value);
     void SetVariableFromParam(ros::NodeHandle, std::string name, int& value);
-    void SetVariableFromParam(ros::NodeHandle, std::string name, std::vector<double>& value);
+    void SetVariableFromParam(ros::NodeHandle, std::string name, double& value, double standard_value);
+    void SetVariableFromParam(ros::NodeHandle, std::string name,
+                              std::vector<double>& value);
     
     // Conversions
     void GPStoEarth(const double lat, const double lon, double& east, double&north);
