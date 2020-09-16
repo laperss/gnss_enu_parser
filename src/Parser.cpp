@@ -5,6 +5,7 @@
 #include<string>
 #include<chrono>
 #include "Parser.hpp"
+#include <string>
 
 static const double EPSILON = 0.00000000001;
 
@@ -13,9 +14,9 @@ ros::Time ros_time_from_week_and_tow(const uint32_t week,
     ros::Time rostime(0, 0);
     uint64_t sec = UNIX_TO_GPS_OFFSET + floor(timeOfWeek) + week*7*24*3600;
     uint64_t nsec = (roundf(timeOfWeek * 10) - floor(timeOfWeek)*10)*1e8;
-    
+
     rostime = ros::Time(sec, nsec);
-    
+
     return rostime;
 }
 
@@ -32,7 +33,7 @@ Parser::Parser(ros::NodeHandle nh):
     SetVariableFromParam(nh_gnss_parser, "/origin_lon", lon_origin, 16.685680);
     ROS_INFO("GNSS parser origin = (%f, %f)", lat_origin, lon_origin);
 
-    
+
     int the_message_type = 1;
     /*
     if(nh_gnss_parser.hasParam("msg_type")){
@@ -51,11 +52,11 @@ Parser::Parser(ros::NodeHandle nh):
         msg_type == ENU;
         ROS_INFO("Using message type: ENU");
     }
-    dt = 1/rate; 
+    dt = 1/rate;
 
     reset_service = nh.advertiseService("/filter/reset", &Parser::Reset, this);
 
-    
+
 }
 
 
@@ -82,7 +83,7 @@ bool Parser::SetupSerial(Serial * serial){
                 count = 0;
             }else{
                 tow = enu.tow;
-                count++;            
+                count++;
             }
             // ADD: Check that values make sense
             if (enu.ns == 0){
@@ -92,7 +93,7 @@ bool Parser::SetupSerial(Serial * serial){
                 if (error_count>=10){
                     ROS_ERROR("Setup of GNSS parser could not finish: Serial port readings are incorrect.");
                     return -1;
-                    ros::shutdown();            
+                    ros::shutdown();
                 }
                 ros::Duration(1.0).sleep();
             }else{
@@ -129,17 +130,17 @@ bool Parser::SetupSocket(Socket * socket){
             count = 0;
         }else{
             tow = enu.tow;
-            count++;            
+            count++;
         }
         // ADD: Check that values make sense
         if (enu.ns == 0){
             ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, message);
             error_count++;
             if (error_count>10){
-                ros::shutdown();            
+                ros::shutdown();
                 return -1;
             }
-        }         
+        }
 	loop_rate.sleep();
     }
     initial_tow = tow;
@@ -152,7 +153,7 @@ bool Parser::Reset(std_srvs::Empty::Request  &req,
 		   std_srvs::Empty::Response  &res){
     ROS_INFO("Reset state estimation filter");
     ros::spinOnce();
-    
+
     return 1;
 }
 
@@ -170,7 +171,7 @@ void Parser::Char2MSG(char * input){
     }else{
         Char2NMEA(input);
     }
-    
+
 }
 
 void Parser::Char2ENU(char * input){
@@ -183,10 +184,10 @@ void Parser::Char2ENU(char * input){
 
     // ADD: Check that values make sense
     if (enu.ns == 0){
-        ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, input);        
+        ROS_WARN("ENU message invalid (ns = %i): %s", enu.ns, input);
         return;
     }else if (fabs(enu.tow-initial_tow) > 43200){
-        ROS_WARN("ENU message invalid (tow = %f): %s", enu.tow, input);        
+        ROS_WARN("ENU message invalid (tow = %f): %s", enu.tow, input);
         return;
     }
 
@@ -207,46 +208,85 @@ void Parser::Char2ENU(char * input){
     enu_msg.covariance[6+0] = enu.sdue;
     enu_msg.covariance[6+1] = enu.sdnu;
     enu_msg.covariance[6+2] = enu.sdu;
-    
+
     enu_msg.ratio = enu.ratio;
     enu_msg.age = enu.age;
     enu_msg.status = enu.Q;
     enu_msg.numsat = enu.ns;
-	
+
     pose_pub.publish(enu_msg);
 
 }
 
 void Parser::Char2NMEA(char * input){
     NMEAProtocol nmea;
-    char char1[] = "$";
-    char chargga[] = "GPGGA";
-    if (strcmp(input, char1)){
-            double lon_temp;
-            double lat_temp;
-            double lon_min_temp;
-            double lat_min_temp;
-            double lon_sec_temp;
-            double lat_sec_temp;
-            sscanf (input,"$%5s,%f,%3f%2f.%f,%c,%2f%2f.%f,%c,%d,%d,%f,%f,%c,%f,%f",
-                    &nmea.id, &nmea.UTC,
-                    &lat_temp, &lat_min_temp, &lat_sec_temp, &nmea.lat_dir,
-                    &lon_temp, &lon_min_temp, &lon_sec_temp, &nmea.lon_dir,
-                    &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, &nmea.height_unit, &nmea.age, &nmea.ratio);
+    char chargga[] = "$GPGGA";
+    int res_cmp = strcmp(input, chargga);
+    ROS_INFO("Res_cmp = %d",res_cmp);
+    ROS_INFO("Message = %s", input);
 
-            ROS_INFO("Message = %s", input);
-            ROS_INFO("ID = %s", nmea.id);
-            ROS_INFO("UTC = %f", nmea.UTC);
-            ROS_INFO("ns = %f", nmea.ns);
-            
+    char *field[20];
+    if (strncmp(&input[3], "GGA", 3) == 0) {
+      int i = 0;
+							i = parse_comma_delimited_str(input, field, 20);
+							//debug_print_fields(i,field);
+							printf("UTC Time  :%s\r\n",field[1]);
+							printf("Latitude  :%s\r\n",field[2]);
+							printf("Longitude :%s\r\n",field[4]);
+							printf("Altitude  :%s\r\n",field[9]);
+							printf("Satellites:%s\r\n",field[7]);
+              double lon_temp;
+              double lat_temp;
+              double lon_min_temp;
+              double lat_min_temp;
+              double lon_sec_temp;
+              double lat_sec_temp;
+              double lat_test;
+              double lon_test;
+              char * some_char;
+              double some_double;
+              char * var_checksum;
+
+              //nmea.id = field[0];
+              nmea.UTC = atof(field[1]);
+              lat_test = atof(field[2]);
+              strcpy(nmea.lat_dir ,field[3]);
+              lon_test = atof(field[4]);
+              strcpy(nmea.lon_dir, field[5]);
+
+              nmea.Q = atoll(field[6]);
+              nmea.ns = atoll(field[7]);
+              nmea.hdop = atof(field[8]);
+              nmea.height = atof(field[9]);
+              strcpy(nmea.height_unit , &field[10]);
+              nmea.age = atof(field[13]);
+
+          //    ROS_INFO("Message = %s", input);
+            //  int sscanf_out = sscanf (input,"$%s,%f,%f,%c,%f,%c,%d,%d,%f,%f,%c,%f,%c,%f,%c",
+          //            nmea.id,nmea.UTC, lat_test, nmea.lat_dir,
+          //            lon_test, nmea.lon_dir,
+          //            &nmea.Q, &nmea.ns, &nmea.hdop, &nmea.height, nmea.height_unit, &some_double, some_char, &nmea.age, var_checksum);
+        //      ROS_INFO("Succesfully read the message! Number of fields = %d",sscanf_out);
+
+              ROS_INFO("Message = %s", input);
+              ROS_INFO("ID = %s", nmea.id);
+              ROS_INFO("UTC = %f", nmea.UTC);
+              ROS_INFO("ns = %f", nmea.ns);
+              ROS_INFO("lat = %f", lat_test);
+              ROS_INFO("lon = %f", lon_test);
+
             if (strcmp(chargga, nmea.id) && nmea.UTC>0.0 && nmea.ns < 100 && nmea.ns > 0){
                     // ADD: Check that values make sense
-                ROS_INFO("latitude: %f, %f, %f", lat_temp, lat_min_temp, lat_sec_temp);
-                nmea.latitude = lat_temp + lat_min_temp/60 + lat_sec_temp/3600;
-                nmea.longitude = lon_temp + lon_min_temp/60 + lon_sec_temp/3600;
-                
+                int lat_temp = (int)(lat_test/100);
+                double lat_min_temp = lat_test-lat_temp*100;
+                int lon_temp = (int)(lon_test/100);
+                double lon_min_temp = lon_test-lon_temp*100;
+                ROS_INFO("latitude: %f, %f", lat_temp, lat_min_temp);
+                nmea.latitude = lat_temp + (lat_min_temp)/60;
+                nmea.longitude = lon_temp + (lon_min_temp)/60;
+
                 if (nmea.ns == 0){
-                        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);        
+                        ROS_WARN("NMEA message invalid (ns = %i): %s", nmea.ns, input);
                         return;
                     }
 
@@ -265,14 +305,14 @@ void Parser::Char2NMEA(char * input){
                     enu_msg.age = nmea.age;
                     enu_msg.status = nmea.Q;
                     enu_msg.numsat = nmea.ns;
-	
+
                     pose_pub.publish(enu_msg);
                 } else{
                     ROS_WARN("NMEA message invalid: %s", input);
             }
         }
         else{
-                ROS_WARN("NMEA message invalid: %s", input);        
+                ROS_WARN("NMEA message invalid: %s", input);
 
         }
 
@@ -295,7 +335,7 @@ void Parser::GPStoEarth(const double lat, const double lon, double& east, double
 	east = 0.0;
 	north = 0.0;
     }else{
-    
+
 	double lat1r, lon1r, lat2r, lon2r, u, v, x, y;
 	// From (origin)
 	lon1r = deg2rad(lon_origin);
@@ -307,7 +347,7 @@ void Parser::GPStoEarth(const double lat, const double lon, double& east, double
 
 	const double dlon = deg2rad(lon - lon_origin);
 	const double dlat = deg2rad(lat - lat_origin);
-    
+
 	y = sin(dlon)*cos(lat2r);
 	x = cos(lat1r)*sin(lat2r) - sin(lat1r)*cos(lat2r)*cos(dlon);
 	u = sin((lat1r - lat2r)/2);
@@ -373,4 +413,15 @@ void Parser::SetVariableFromParam(ros::NodeHandle nh,
 	ROS_ERROR("No parameter %s", name.c_str());
 	ros::shutdown();
     }
+}
+
+int Parser::parse_comma_delimited_str(char *string, char **fields, int max_fields)
+{
+   int i = 0;
+   fields[i++] = string;
+   while ((i < max_fields) && NULL != (string = strchr(string, ','))) {
+      *string = '\0';
+      fields[i++] = ++string;
+   }
+   return --i;
 }

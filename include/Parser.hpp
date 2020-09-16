@@ -13,9 +13,9 @@
 
 #include <unistd.h> // write(), read(), close()
 
-#include <sys/types.h> 
-#include <arpa/inet.h> 
-#include <netinet/in.h> 
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #pragma once
 
@@ -25,7 +25,7 @@
 // GPS time does not have leap seconds, UNIX does (as of 1/1/2017 - next one is probably in 2020 sometime unless there is some crazy earthquake or nuclear blast)
 # define UNIX_TO_GPS_OFFSET (GPS_UNIX_OFFSET - LEAP_SECONDS)
 
-#define MAXLINE 128 
+#define MAXLINE 128
 #define BUFSIZE 256
 
 
@@ -84,7 +84,7 @@ private:
     char buffer[MAXLINE];
 
     void Reconnect();
-    
+
 public:
     Socket(const int read_port,  std::string ip_addr);
     ~Socket();
@@ -120,10 +120,12 @@ public:
     bool SetupSocket(Socket * socket);
     bool Reset(std_srvs::Empty::Request  &req,
 	       std_srvs::Empty::Response &res);
-    void Char2MSG(char * input);   
-    void Char2ENU(char * input);   
-    void Char2NMEA(char * input);   
-    void Char2ENUNoSend(char * input, ENUProtocol * enu);   
+    void Char2MSG(char * input);
+    void Char2ENU(char * input);
+    void Char2NMEA(char * input);
+    void Char2ENUNoSend(char * input, ENUProtocol * enu);
+    int parse_comma_delimited_str(char *string, char **fields, int max_fields);
+    
     //Serial serial;
     //Socket socket;
 
@@ -145,8 +147,8 @@ private:
         ENU     =  2,
     };
 
-    message_types msg_type; 
-    
+    message_types msg_type;
+
     ros::NodeHandle nh_gnss_parser;
 
     void SetVariableFromParam(ros::NodeHandle, std::string name, double& value);
@@ -156,19 +158,19 @@ private:
     void SetVariableFromParam(ros::NodeHandle, std::string name, double& value, double standard_value);
     void SetVariableFromParam(ros::NodeHandle, std::string name,
                               std::vector<double>& value);
-    
+
     // Conversions
     void GPStoEarth(const double lat, const double lon, double& east, double&north);
-    
-        
+
+
     bool publish;
-   
+
     // Publishers
     ros::Publisher pose_pub;
 
     // Servers
     ros::ServiceServer reset_service;
-    
+
     // Channel names
     std::string pose_channel;
 };
