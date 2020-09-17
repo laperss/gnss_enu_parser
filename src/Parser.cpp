@@ -223,7 +223,7 @@ void Parser::Char2NMEA(char * input){
     char chargga[] = "GPGGA";
     char charrmc[] = "GPRMC";
     std::string ggastr = "$GPGGA";
-    if (strcmp(input, char1)==0){
+    if (strcmp(input, char1)){
             double lon_temp;
             double lat_temp;
             double lon_min_temp;
@@ -239,10 +239,12 @@ void Parser::Char2NMEA(char * input){
             int count = 0;
             double latitude_tmp;
             double longitude_tmp;
+            bool continue_parse = false;
             while(std::getline(ss, value, ',')) {
                 if (count == 0){
                     if((value.compare(ggastr)==0)){
                         for (int i=0;i<5;i++) nmea.id[i] = input[1+i];
+                        continue_parse = true;
                     }else{
                         for (int i=0;i<5;i++) nmea.id[i] = charrmc[i];
                         break;
@@ -266,7 +268,7 @@ void Parser::Char2NMEA(char * input){
               count++;
             }
                 
-            if (strcmp(chargga, nmea.id)==0){                
+            if (continue_parse == true){                
                     double east, north;
                     GPStoEarth(nmea.latitude, nmea.longitude, east, north);
                     gnss_data::Enu enu_msg;
@@ -285,10 +287,11 @@ void Parser::Char2NMEA(char * input){
                     pose_pub.publish(enu_msg);
                 } else{
                     ROS_WARN("NMEA message invalid: %s", input);
+                    std::cout << nmea.id << std::endl;
             }
         }
         else{
-                ROS_WARN("NMEA message invalid: %s", input);        
+                ROS_WARN("2 NMEA message invalid: %s", input);        
 
         }
 

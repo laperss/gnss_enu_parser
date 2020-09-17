@@ -1,6 +1,6 @@
 <launch>
   <!-- Drone namespace prefix  -->
-  <arg name="gnss_ns" default="gnss"/>
+  <arg name="gnss_ns" default="dji12/dji_sdk"/>
 
   <!-- Set debug to true to fake data -->
   <arg name="control" default="true"/>

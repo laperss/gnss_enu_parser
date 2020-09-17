@@ -32,35 +32,32 @@ class relative_positioning(object):
         self.count = 0
         
     def usv_callback(self, msg):    
-        if (abs(msg.east)>500 or abs(msg.north)>1000):
-            self.east_usv = msg.east
-            self.north_usv = msg.north
-            self.up_usv = msg.up
-        else:
-            rospy.logerr("Received drone position is incorrect: (%f, %f)", msg.east, msg.north)
+        print(msg.east)
+        self.east_usv = msg.east
+        self.north_usv = msg.north
+        self.up_usv = msg.up
+
 
     def uav_callback(self, msg):    
-        if (abs(msg.east)>500 or abs(msg.north)>1000):
-            self.east_uav = msg.east
-            self.north_uav = msg.north
-            self.up_uav = msg.up
-        else:
-            rospy.logerr("Received drone position is incorrect: (%f, %f)", msg.east, msg.north)
+        self.east_uav = msg.east
+        self.north_uav = msg.north
+        self.up_uav = msg.up
+
             
     def control_callback(self, msg):
         self.control = msg.axes
 
     def step(self):        
+
         if (self.east_uav < 1000 and self.east_usv < 1000):
             enu_msg = Enu()
-        
-            enu_msg.header.stamp = self.ENUtime
+       
             enu_msg.east = self.east_uav - self.east_usv
             enu_msg.north = self.north_uav - self.north_usv
             enu_msg.up = self.up_uav - self.up_usv
             enu_msg.status = 1
             enu_msg.numsat = 20
-            enu_pub.publish(self.enu_msg)
+            self.enu_pub.publish(enu_msg)
                 
                 
     def loop(self):
@@ -68,7 +65,7 @@ class relative_positioning(object):
         dt = 1.0/RATE
         while not rospy.is_shutdown() and not self.shutdown:
             self.step()
-            self.count += 1        
+            self.count += 1    
             rate.sleep()
         
 

@@ -1,6 +1,6 @@
 <launch>
   <!-- Drone namespace prefix  -->
-  <arg name="gnss_ns" default="gnss"/>
+  <arg name="gnss_ns" default="cb90"/>
 
   <!-- Set debug to true to fake data -->
   <arg name="control" default="true"/>
