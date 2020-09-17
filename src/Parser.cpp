@@ -247,18 +247,18 @@ void Parser::Char2NMEA(char * input){
               double some_double;
               char * var_checksum;
 
-              //nmea.id = field[0];
+              strcpy(nmea.id,"GPGGA");
               nmea.UTC = atof(field[1]);
               lat_test = atof(field[2]);
-              strcpy(nmea.lat_dir ,field[3]);
+              // strcpy(nmea.lat_dir ,field[3]);
               lon_test = atof(field[4]);
-              strcpy(nmea.lon_dir, field[5]);
+              //strcpy(nmea.lon_dir, field[5]);
 
               nmea.Q = atoll(field[6]);
               nmea.ns = atoll(field[7]);
               nmea.hdop = atof(field[8]);
               nmea.height = atof(field[9]);
-              strcpy(nmea.height_unit , &field[10]);
+              //strcpy(nmea.height_unit , &field[10]);
               nmea.age = atof(field[13]);
 
           //    ROS_INFO("Message = %s", input);
